@@ -51,7 +51,14 @@ func main() {
 
 For full mathematical design and TUI layout examples, see [docs/DISCRETE_CASSOWARY.md](docs/DISCRETE_CASSOWARY.md).
 
-## Tests & Benchmarks
+## Console Demo
+
+Run the interactive TUI console demo:
+```sh
+go run ./cmd/kiwi-demo
+```
+
+## Testing & Benchmarks
 
 Run unit tests:
 ```sh
