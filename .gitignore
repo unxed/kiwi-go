@@ -5,3 +5,6 @@
 coverage.html
 bin/
 tmp/
+# WebAssembly build artifacts
+*.wasm
+wasm/wasm_exec.js
