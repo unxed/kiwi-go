@@ -51,3 +51,19 @@ func TestApportionSumNilVariableFilter(t *testing.T) {
 		t.Errorf("nil variable should evaluate to 0")
 	}
 }
+func TestApportionSumMultiUnitExcess(t *testing.T) {
+	v1 := kiwi.NewVariable("v1")
+	v2 := kiwi.NewVariable("v2")
+
+	vars := []*kiwi.Variable{v1, v2}
+	// Floor values 10 and 10 (sum 20), target is 15 (excess = 5 > len(vars))
+	floatVals := map[*kiwi.Variable]float64{
+		v1: 10.2,
+		v2: 10.2,
+	}
+
+	res := kiwi.ApportionSum(vars, floatVals, 15)
+	if res.Sum(vars...) != 15 {
+		t.Errorf("expected sum 15, got %d", res.Sum(vars...))
+	}
+}
