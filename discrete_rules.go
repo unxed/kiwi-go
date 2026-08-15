@@ -58,7 +58,7 @@ func SnapToGrid(v *Variable, step int) HintDirective {
 		val := res.Get(v)
 		rem := val % step
 		if rem != 0 {
-			if rem*2 >= step {
+			if rem*2 > step {
 				res[v] = val + (step - rem)
 			} else {
 				res[v] = val - rem

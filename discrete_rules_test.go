@@ -22,8 +22,8 @@ func TestSnapToGrid(t *testing.T) {
 	)
 	hinter.Apply(res)
 
-	if res.Get(v1) != 6 {
-		t.Errorf("expected 5 snapped to 6, got %d", res.Get(v1))
+	if res.Get(v1) != 4 {
+		t.Errorf("expected 5 snapped to 4, got %d", res.Get(v1))
 	}
 	if res.Get(v2) != 2 {
 		t.Errorf("expected 3 snapped to 2, got %d", res.Get(v2))
