@@ -15,7 +15,7 @@ func TestDiscreteSolverThreeColumns(t *testing.T) {
 	ds := kiwi.NewDiscreteSolver()
 	solver := ds.Solver()
 
-	_ = solver.AddEditVariable(total, kiwi.StrengthRequired)
+	_ = solver.AddEditVariable(total, kiwi.StrengthStrong)
 	_ = solver.SuggestValue(total, 80)
 
 	// col1 == col2, col2 == col3
@@ -56,7 +56,7 @@ func TestDiscreteSolverTUIWindowLayout(t *testing.T) {
 	ds := kiwi.NewDiscreteSolver()
 	solver := ds.Solver()
 
-	_ = solver.AddEditVariable(screenWidth, kiwi.StrengthRequired)
+	_ = solver.AddEditVariable(screenWidth, kiwi.StrengthStrong)
 	_ = solver.SuggestValue(screenWidth, 120)
 
 	// sidebarWidth == 0.25 * screenWidth => 30
