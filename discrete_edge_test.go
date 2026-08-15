@@ -67,3 +67,24 @@ func TestApportionSumMultiUnitExcess(t *testing.T) {
 		t.Errorf("expected sum 15, got %d", res.Sum(vars...))
 	}
 }
+func TestApportionSumConflictingMinMax(t *testing.T) {
+	v1 := kiwi.NewVariable("v1")
+	v2 := kiwi.NewVariable("v2")
+
+	vars := []*kiwi.Variable{v1, v2}
+	floatVals := map[*kiwi.Variable]float64{
+		v1: 10.0,
+		v2: 10.0,
+	}
+
+	// MinSizes require 8 + 8 = 16, but targetSum is 10
+	minSizes := map[*kiwi.Variable]int{
+		v1: 8,
+		v2: 8,
+	}
+
+	res := kiwi.ApportionSum(vars, floatVals, 10, minSizes)
+	if res.Get(v1) != 8 || res.Get(v2) != 8 {
+		t.Errorf("expected variables clamped to minSize 8, got v1=%d, v2=%d", res.Get(v1), res.Get(v2))
+	}
+}
