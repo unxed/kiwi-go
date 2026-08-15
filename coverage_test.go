@@ -66,3 +66,38 @@ func TestSolverMaxIterationsLimit(t *testing.T) {
 		t.Errorf("expected 'solver iterations exceeded' error, got %v", err)
 	}
 }
+func TestSolverUnknownErrors(t *testing.T) {
+	solver := kiwi.NewSolver()
+	v := kiwi.NewVariable("v")
+	cn := kiwi.NewConstraint(v, kiwi.OpEq)
+
+	err := solver.RemoveConstraint(cn)
+	if err == nil || err.Error() != "unknown constraint" {
+		t.Errorf("expected 'unknown constraint', got %v", err)
+	}
+
+	err = solver.RemoveEditVariable(v)
+	if err == nil || err.Error() != "unknown edit variable" {
+		t.Errorf("expected 'unknown edit variable', got %v", err)
+	}
+
+	err = solver.SuggestValue(v, 100)
+	if err == nil || err.Error() != "unknown edit variable" {
+		t.Errorf("expected 'unknown edit variable', got %v", err)
+	}
+}
+
+func TestIndexedMapCopyWithCustomVal(t *testing.T) {
+	m := kiwi.NewIndexedMap[*dummyItem, string]()
+	i := &dummyItem{id: 10}
+	m.Insert(i, "hello")
+
+	cp := m.Copy(func(val string) string {
+		return val + "_copied"
+	})
+
+	p, ok := cp.Find(i)
+	if !ok || p.Second != "hello_copied" {
+		t.Errorf("expected 'hello_copied', got %v, ok=%v", p, ok)
+	}
+}
