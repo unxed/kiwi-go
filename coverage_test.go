@@ -150,3 +150,35 @@ func TestInequalityOperators(t *testing.T) {
 		t.Errorf("expected x in [50, 100], got %f", x.Value())
 	}
 }
+func TestMustCreateConstraint(t *testing.T) {
+	solver := kiwi.NewSolver()
+	x := kiwi.NewVariable("x")
+
+	cn := solver.MustCreateConstraint(x, kiwi.OpEq, 10)
+	if cn == nil || !solver.HasConstraint(cn) {
+		t.Errorf("expected constraint created and added")
+	}
+
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Errorf("expected panic on duplicate MustCreateConstraint")
+		}
+	}()
+	_ = solver.MustCreateConstraint(x, kiwi.OpEq, 10)
+}
+
+func TestRowRemoveSymbol(t *testing.T) {
+	r := kiwi.NewRow(10)
+	s := kiwi.NewSymbol(kiwi.SymbolSlack, 1)
+	r.InsertSymbol(s, 5.0)
+
+	if r.CoefficientFor(s) != 5.0 {
+		t.Errorf("expected coefficient 5.0")
+	}
+
+	r.RemoveSymbol(s)
+	if r.CoefficientFor(s) != 0.0 {
+		t.Errorf("expected symbol removed")
+	}
+}
