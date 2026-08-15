@@ -1,9 +1,19 @@
 import fs from 'fs';
 import assert from 'assert';
+import crypto from 'crypto';
+import { performance } from 'perf_hooks';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Polyfill globalThis.crypto and performance for NodeJS environments
+if (!globalThis.crypto) {
+    globalThis.crypto = crypto.webcrypto || crypto;
+}
+if (!globalThis.performance) {
+    globalThis.performance = performance;
+}
 
 // Execute wasm_exec.js in global context to define globalThis.Go
 const wasmExecCode = fs.readFileSync(join(__dirname, 'wasm_exec.js'), 'utf8');
