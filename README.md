@@ -41,6 +41,15 @@ func main() {
 	fmt.Printf("right = %f\n", right.Value()) // 500.0
 }
 ```
+## Discrete Cassowary & TUI Grid Hinting
+
+`kiwi-go` includes a **Discrete Cassowary Engine** designed for Terminal User Interfaces (TUI), adapting concepts from font hinting (TrueType & FreeType):
+
+- **FreeType-style Autohinting (`ApportionSum`)**: Distributes rounding remainders using Hamilton / Hare-Niemeyer apportionment so that integer component sizes sum to container totals with zero character gaps or overflows, preserving layout symmetry.
+- **TrueType-style Rule Directives (`RuleHinter`)**: Apply explicit layout instructions such as `SnapToGrid` (for double-width CJK or grid boundaries), `ClampMinMax`, `EqualizeGroup`, and `AlignEdges`.
+- **`DiscreteSolver`**: Integrates continuous Cassowary constraint solving, autohinting apportionment, and rule directives in a unified TUI layout solver.
+
+For full mathematical design and TUI layout examples, see [docs/DISCRETE_CASSOWARY.md](docs/DISCRETE_CASSOWARY.md).
 
 ## Tests & Benchmarks
 
