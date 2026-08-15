@@ -10,6 +10,7 @@
   - `ApportionSum`: FreeType-inspired Hamilton/Hare-Niemeyer largest remainder sum distribution with symmetry preservation, excess reduction, and min-size clamping.
   - `RuleHinter` & `HintDirective`: TrueType-inspired directives (`SnapToGrid`, `ClampMinMax`, `EqualizeGroup`, `AlignEdges`, `CustomDirective`).
   - `DiscreteSolver`: High-level solver integrating Cassowary continuous constraint solving, autohinting apportionment, and rule directives.
+- **Demo Application**: Interactive console demo in `cmd/kiwi-demo` showcasing continuous Cassowary, autohinting vs naïve rounding, rule directives, and full ASCII TUI window rendering.
 
 ## 3. Concurrency & Enterprise Readiness
 - **Thread Safety**: `Variable` methods use `sync.RWMutex` for concurrent read/write safety (`go test -race ./...` clean).
@@ -18,7 +19,7 @@
 - **Documentation**: Package documentation (`doc.go`), runnable Go examples (`doc_test.go`), TUI concept guide (`docs/DISCRETE_CASSOWARY.md`), and `README.md`.
 
 ## 4. Test & Benchmark Verification
-- `go test -v ./...`: 100% passing.
+- `go test -v ./...`: 100% passing (including `cmd/kiwi-demo`).
 - `go test -bench=. ./...`: Benchmarks for continuous solver and discrete TUI layouts passing.
 - Edge cases tested: negative coordinates, nil filtering, multi-unit excess reduction, conflicting min/max bounds, unbounded objectives, iteration limits, and thread safety.
 
