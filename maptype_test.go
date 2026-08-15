@@ -3,7 +3,7 @@ package kiwi_test
 import (
 	"testing"
 
-	"github.com/lume/kiwi-go"
+	"github.com/unxed/kiwi-go"
 )
 
 type dummyItem struct {

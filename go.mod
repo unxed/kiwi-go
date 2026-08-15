@@ -1,3 +1,3 @@
-module github.com/lume/kiwi-go
+module github.com/unxed/kiwi-go
 
 go 1.26.0
