@@ -81,6 +81,6 @@ func (c *Constraint) Strength() float64 {
 }
 
 func (c *Constraint) String() string {
-	opStr := ["<=", ">=", "="][c.operator]
+	opStr := [...]string{"<=", ">=", "="}[c.operator]
 	return fmt.Sprintf("%s %s 0 (%g)", c.expression.String(), opStr, c.strength)
 }
