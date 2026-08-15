@@ -5,11 +5,12 @@ import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Execute wasm_exec.js in the global context
+// Execute wasm_exec.js in global context to define globalThis.Go
 const wasmExecCode = fs.readFileSync(join(__dirname, 'wasm_exec.js'), 'utf8');
 (new Function(wasmExecCode))();
 
-import { initWasm, Solver, Variable, Constraint, Operator, Strength } from './kiwi.js';
+// Dynamically import kiwi.js after Go polyfill is initialized
+const { initWasm, Solver, Variable, Constraint, Operator, Strength } = await import('./kiwi.js');
 
 async function test() {
     console.log("Loading WASM module...");

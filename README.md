@@ -77,7 +77,7 @@ First, ensure you have generated `kiwi.wasm` and `wasm_exec.js` using `./build.s
 To run the NodeJS integration test, execute:
 
 ```sh
-node test.mjs
+node test.js
 ```
 
 You can also run the internal Go bridge tests using standard Go tools:
