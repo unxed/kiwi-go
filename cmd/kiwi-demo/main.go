@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/unxed/kiwi-go"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -17,6 +20,12 @@ func main() {
 	runNaïveVsAutohintDemo()
 	runTrueTypeRulesDemo()
 	runTUIWindowLayoutDemo()
+
+	if os.Getenv("KIWI_TESTING") == "1" {
+		return
+	}
+
+	runInteractiveTUI()
 }
 
 func runContinuousDemo() {
@@ -167,9 +176,9 @@ func renderBoxRow(label string, widths []int) {
 
 func renderTUILayout(sidebarW, mainW, contentHeight int) {
 	totalW := sidebarW + mainW
-	topBorder := "+" + strings.Repeat("-", totalW-2) + "+"
+	topBorder := "+" + safeRepeat("-", totalW-2) + "+"
 	header := "| " + padCenter("KIWI-GO TUI AUTO-LAYOUT ENGINE", totalW-4) + " |"
-	sepBar := "+" + strings.Repeat("-", sidebarW-1) + "+" + strings.Repeat("-", mainW-2) + "+"
+	sepBar := "+" + safeRepeat("-", sidebarW-1) + "+" + safeRepeat("-", mainW-2) + "+"
 
 	fmt.Println("   " + topBorder)
 	fmt.Println("   " + header)
@@ -192,7 +201,7 @@ func renderTUILayout(sidebarW, mainW, contentHeight int) {
 		fmt.Println("   " + line)
 	}
 
-	botBorder := "+" + strings.Repeat("-", sidebarW-1) + "+" + strings.Repeat("-", mainW-2) + "+"
+	botBorder := "+" + safeRepeat("-", sidebarW-1) + "+" + safeRepeat("-", mainW-2) + "+"
 	footer := "| " + padLeft("Status: READY", sidebarW-3) + " | " + padLeft("Press Ctrl+C to exit", mainW-4) + " |"
 
 	fmt.Println("   " + botBorder)
@@ -201,19 +210,175 @@ func renderTUILayout(sidebarW, mainW, contentHeight int) {
 	fmt.Println()
 }
 
+func safeRepeat(s string, count int) string {
+	if count <= 0 {
+		return ""
+	}
+	return strings.Repeat(s, count)
+}
+
 func padLeft(s string, width int) string {
+	if width <= 0 {
+		return ""
+	}
 	if len(s) >= width {
 		return s[:width]
 	}
-	return s + strings.Repeat(" ", width-len(s))
+	return s + safeRepeat(" ", width-len(s))
 }
 
 func padCenter(s string, width int) string {
+	if width <= 0 {
+		return ""
+	}
 	if len(s) >= width {
 		return s[:width]
 	}
 	pad := width - len(s)
 	padL := pad / 2
 	padR := pad - padL
-	return strings.Repeat(" ", padL) + s + strings.Repeat(" ", padR)
+	return safeRepeat(" ", padL) + s + safeRepeat(" ", padR)
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func runInteractiveTUI() {
+	fd := int(os.Stdin.Fd())
+	if !term.IsTerminal(fd) {
+		return
+	}
+
+	fmt.Println("\n--- 5. Interactive Full TUI Window Layout ---")
+	fmt.Println("   Press ENTER to start interactive mode (Resize window to test! Press any key to exit)...")
+	buf := make([]byte, 1)
+	_, _ = os.Stdin.Read(buf)
+
+	oldState, err := term.MakeRaw(fd)
+	if err != nil {
+		fmt.Printf("   [Failed to enter raw mode: %v]\n", err)
+		return
+	}
+	defer term.Restore(fd, oldState)
+
+	ds := kiwi.NewDiscreteSolver()
+	solver := ds.Solver()
+
+	totalW := kiwi.NewVariable("totalW")
+	sidebarW := kiwi.NewVariable("sidebarW")
+	mainW := kiwi.NewVariable("mainW")
+
+	_ = solver.AddEditVariable(totalW, kiwi.StrengthStrong)
+	_ = solver.AddConstraint(kiwi.NewConstraint(sidebarW, kiwi.OpEq, totalW.Multiply(0.3)))
+	_ = solver.AddConstraint(kiwi.NewConstraint(sidebarW.Plus(mainW), kiwi.OpEq, totalW))
+
+	ds.SetMinSize(sidebarW, 15)
+	ds.AddApportionGroup(kiwi.ApportionGroup{
+		Vars:      []*kiwi.Variable{sidebarW, mainW},
+		TargetVar: totalW,
+	})
+	ds.AddDirective(kiwi.SnapToGrid(sidebarW, 2))
+
+	keyCh := make(chan struct{})
+	go func() {
+		b := make([]byte, 1)
+		_, _ = os.Stdin.Read(b)
+		keyCh <- struct{}{}
+	}()
+
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+
+	lastW, lastH := -1, -1
+
+	for {
+		select {
+		case <-keyCh:
+			fmt.Print("\r\033[H\033[2J") // Clear screen
+			fmt.Print("Exited interactive demo.\r\n")
+			return
+		case <-ticker.C:
+			w, h, err := term.GetSize(fd)
+			if err != nil {
+				w, h = 80, 24
+			}
+			if w != lastW || h != lastH {
+				lastW, lastH = w, h
+				_ = solver.SuggestValue(totalW, float64(w))
+				res := ds.SolveDiscrete()
+
+				sw := res.Get(sidebarW)
+				mw := res.Get(mainW)
+
+				fmt.Print("\r\033[H\033[2J") // Clear screen
+				renderInteractiveTUILayout(sw, mw, h, w)
+			}
+		}
+	}
+}
+
+func renderInteractiveTUILayout(sidebarW, mainW, screenH, screenW int) {
+	if sidebarW+mainW > screenW {
+		mainW = screenW - sidebarW
+	}
+	if mainW < 2 {
+		mainW = 2
+	}
+	if sidebarW < 2 {
+		sidebarW = 2
+	}
+
+	totalW := sidebarW + mainW
+	topBorder := "+" + safeRepeat("-", totalW-2) + "+"
+	headerText := "KIWI-GO INTERACTIVE TUI (Press any key to exit)"
+	if totalW-4 < len(headerText) {
+		headerText = headerText[:max(0, totalW-4)]
+	}
+	header := "| " + padCenter(headerText, totalW-4) + " |"
+	sepBar := "+" + safeRepeat("-", sidebarW-1) + "+" + safeRepeat("-", mainW-2) + "+"
+
+	fmt.Print(topBorder + "\r\n")
+	fmt.Print(header + "\r\n")
+	fmt.Print(sepBar + "\r\n")
+
+	contentHeight := screenH - 6
+	if contentHeight < 1 {
+		contentHeight = 1
+	}
+
+	for i := 0; i < contentHeight; i++ {
+		sideText := ""
+		mainText := ""
+		if i == 1 {
+			sideText = "Tree View"
+			mainText = "Resize the terminal window!"
+		} else if i == 2 {
+			sideText = " > src/"
+			mainText = fmt.Sprintf("Current Size: %dx%d", screenW, screenH)
+		} else if i == 3 {
+			sideText = " > docs/"
+			mainText = "Sidebar is 30% (snapped to even)"
+		}
+		line := "| " + padLeft(sideText, sidebarW-3) + " | " + padLeft(mainText, mainW-4) + " |"
+		fmt.Print(line + "\r\n")
+	}
+
+	botBorder := "+" + safeRepeat("-", sidebarW-1) + "+" + safeRepeat("-", mainW-2) + "+"
+	footerText1 := "Status: RESIZING"
+	if sidebarW-3 < len(footerText1) {
+		footerText1 = footerText1[:max(0, sidebarW-3)]
+	}
+	footerText2 := fmt.Sprintf("W:%d H:%d", screenW, screenH)
+	if mainW-4 < len(footerText2) {
+		footerText2 = footerText2[:max(0, mainW-4)]
+	}
+	footer := "| " + padLeft(footerText1, sidebarW-3) + " | " + padLeft(footerText2, mainW-4) + " |"
+
+	fmt.Print(botBorder + "\r\n")
+	fmt.Print(footer + "\r\n")
+	fmt.Print(topBorder + "\r\n")
 }
