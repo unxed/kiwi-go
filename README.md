@@ -70,6 +70,32 @@ Run benchmarks:
 go test -bench=. ./...
 ```
 
+### Test in NodeJS
+
+First, ensure you have generated `kiwi.wasm` and `wasm_exec.js` using `./build.sh`.
+
+To run the NodeJS integration test, execute:
+
+```sh
+node test.mjs
+```
+
+You can also run the internal Go bridge tests using standard Go tools:
+```sh
+GOOS=js GOARCH=wasm go test -v .
+```
+
+### Web Demo
+
+To see the engine solving UI layouts in your browser:
+1. Start a local web server in this directory (browsers do not allow fetching WASM from local `file://` URLs due to CORS). For example:
+   ```sh
+   python3 -m http.server 8080
+   ```
+2. Open [http://localhost:8080/index.html](http://localhost:8080/index.html) in your browser.
+3. Resize the gray container box to see Cassowary dynamically calculate and apply layout constraints in real-time.
+```
+
 ## License
 
 Modified BSD License.

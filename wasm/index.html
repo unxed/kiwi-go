@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>kiwi-go WebAssembly Demo</title>
+    <!-- Load Go's WebAssembly polyfill globally -->
+    <script src="wasm_exec.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #container {
+            width: 500px; height: 100px;
+            background: #eee; border: 2px dashed #aaa;
+            position: relative; resize: horizontal; overflow: hidden;
+        }
+        .box {
+            height: 100%; position: absolute; top: 0; box-sizing: border-box;
+            text-align: center; padding-top: 40px; font-weight: bold; color: white;
+        }
+        #box1 { background: #e74c3c; border-right: 2px solid #fff; }
+        #box2 { background: #3498db; }
+        .instructions { margin-bottom: 20px; color: #555; }
+    </style>
+</head>
+<body>
+    <h1>kiwi-go WebAssembly Demo</h1>
+    <div class="instructions">
+        <p>This demo runs the Cassowary solver entirely in your browser using Go + WebAssembly.</p>
+        <p><strong>Try it:</strong> Drag the bottom-right corner of the gray container below to resize it.</p>
+        <ul>
+            <li>Box 1 is attached to the left.</li>
+            <li>Box 2 is attached directly to the right of Box 1.</li>
+            <li>The width of Box 2 is constrained to always be exactly <strong>twice</strong> the width of Box 1.</li>
+            <li>The sum of their widths always equals the container's width.</li>
+        </ul>
+    </div>
+
+    <div id="container">
+        <div id="box1" class="box">Box 1</div>
+        <div id="box2" class="box">Box 2</div>
+    </div>
+
+    <script type="module">
+        import { initWasm, Solver, Variable, Constraint, Operator, Strength } from './kiwi.js';
+
+        async function main() {
+            // Initialize WASM via streaming compilation
+            await initWasm(await fetch('kiwi.wasm'));
+
+            const solver = new Solver();
+            const containerW = new Variable("containerW");
+            const box1W = new Variable("box1W");
+            const box2W = new Variable("box2W");
+
+            // Box 1 X is always 0
+            const box1X = new Variable("box1X");
+            solver.addConstraint(new Constraint(box1X, Operator.Eq, 0));
+
+            // Box 2 X is right after Box 1 (box2X == box1X + box1W)
+            const box2X = new Variable("box2X");
+            solver.addConstraint(new Constraint(box2X, Operator.Eq, box1X.plus(box1W)));
+
+            // Container width is sum of boxes (containerW == box1W + box2W)
+            solver.addConstraint(new Constraint(containerW, Operator.Eq, box1W.plus(box2W)));
+
+            // Make Box 2 exactly twice as wide as Box 1 (box2W == box1W * 2)
+            solver.addConstraint(new Constraint(box2W, Operator.Eq, box1W.multiply(2)));
+
+            // We edit the container width based on DOM interactions
+            solver.addEditVariable(containerW, Strength.strong);
+
+            const containerEl = document.getElementById('container');
+            const box1El = document.getElementById('box1');
+            const box2El = document.getElementById('box2');
+
+            function updateLayout(newWidth) {
+                // Feed the new window/container width into the Cassowary solver
+                solver.suggestValue(containerW, newWidth);
+                solver.updateVariables();
+
+                // Apply solved coordinates back to the DOM
+                box1El.style.left = box1X.value() + 'px';
+                box1El.style.width = box1W.value() + 'px';
+
+                box2El.style.left = box2X.value() + 'px';
+                box2El.style.width = box2W.value() + 'px';
+            }
+
+            // Listen to browser resize events on the container
+            new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    updateLayout(entry.contentRect.width);
+                }
+            }).observe(containerEl);
+
+            // Initial render
+            updateLayout(containerEl.clientWidth);
+        }
+
+        main().catch(console.error);
+    </script>
+</body>
+</html>
