@@ -61,3 +61,14 @@ func TestVariable(t *testing.T) {
 		t.Errorf("expected non-empty string representation")
 	}
 }
+func TestVariableStringRepresentation(t *testing.T) {
+	v := kiwi.NewVariable("x")
+	v.SetContext("myContext")
+	v.SetValue(42)
+
+	str := v.String()
+	expected := "myContext[x:42]"
+	if str != expected {
+		t.Errorf("expected %s, got %s", expected, str)
+	}
+}

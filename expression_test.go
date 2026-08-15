@@ -125,3 +125,13 @@ func TestExpressionArithmetic(t *testing.T) {
 		t.Errorf("expected non-empty string representation")
 	}
 }
+func TestExpressionMultipleTermsString(t *testing.T) {
+	x := kiwi.NewVariable("x")
+	y := kiwi.NewVariable("y")
+	expr := x.Multiply(2).Plus(y.Multiply(3)).Plus(10)
+
+	str := expr.String()
+	if str == "" {
+		t.Errorf("expected non-empty string for expression with multiple terms")
+	}
+}
