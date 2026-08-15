@@ -1,0 +1,7 @@
+# Go build outputs and coverage
+*.out
+*.test
+*.prof
+coverage.html
+bin/
+tmp/
