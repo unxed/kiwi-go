@@ -81,6 +81,29 @@ func (v *Variable) Unsubscribe() {
 	v.callback = nil
 }
 
+// Plus creates a new Expression by adding a number, variable or expression.
+func (v *Variable) Plus(value any) *Expression {
+	return NewExpression(v, value)
+}
+
+// Minus creates a new Expression by subtracting a number, variable or expression.
+func (v *Variable) Minus(value any) *Expression {
+	if val, ok := toFloat(value); ok {
+		return NewExpression(v, -val)
+	}
+	return NewExpression(v, []any{-1.0, value})
+}
+
+// Multiply creates a new Expression by multiplying with a fixed number.
+func (v *Variable) Multiply(coefficient float64) *Expression {
+	return NewExpression([]any{coefficient, v})
+}
+
+// Divide creates a new Expression by dividing with a fixed number.
+func (v *Variable) Divide(coefficient float64) *Expression {
+	return NewExpression([]any{1.0 / coefficient, v})
+}
+
 // String returns string representation of the variable.
 func (v *Variable) String() string {
 	return fmt.Sprintf("%v[%s:%g]", v.context, v.name, v.val)
