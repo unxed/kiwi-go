@@ -108,6 +108,25 @@ func parseArgs(args []any) (*IndexedMap[*Variable, float64], float64) {
 				termPair := t2.ItemAt(j)
 				terms.SetDefault(termPair.First, factory).Second += termPair.Second
 			}
+		case [2]any:
+			coeff, ok := toFloat(v[0])
+			if !ok {
+				panic(errors.New("array item 0 must be a number"))
+			}
+			target := v[1]
+			switch t := target.(type) {
+			case *Variable:
+				terms.SetDefault(t, factory).Second += coeff
+			case *Expression:
+				constant += t.Constant() * coeff
+				t2 := t.Terms()
+				for j := 0; j < t2.Size(); j++ {
+					termPair := t2.ItemAt(j)
+					terms.SetDefault(termPair.First, factory).Second += termPair.Second * coeff
+				}
+			default:
+				panic(errors.New("array item 1 must be a variable or expression"))
+			}
 		case []any:
 			if len(v) != 2 {
 				panic(errors.New("array must have length 2"))
@@ -141,13 +160,27 @@ func toFloat(item any) (float64, bool) {
 	switch v := item.(type) {
 	case float64:
 		return v, true
-	case int:
-		return float64(v), true
 	case float32:
+		return float64(v), true
+	case int:
 		return float64(v), true
 	case int64:
 		return float64(v), true
 	case int32:
+		return float64(v), true
+	case int16:
+		return float64(v), true
+	case int8:
+		return float64(v), true
+	case uint:
+		return float64(v), true
+	case uint64:
+		return float64(v), true
+	case uint32:
+		return float64(v), true
+	case uint16:
+		return float64(v), true
+	case uint8:
 		return float64(v), true
 	default:
 		return 0, false

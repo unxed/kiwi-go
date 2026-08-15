@@ -108,3 +108,8 @@ func (v *Variable) Divide(coefficient float64) *Expression {
 func (v *Variable) String() string {
 	return fmt.Sprintf("%v[%s:%g]", v.context, v.name, v.val)
 }
+
+// MarshalJSON returns the JSON representation of the variable.
+func (v *Variable) MarshalJSON() ([]byte, error) {
+	return []byte(fmt.Sprintf(`{"name":%q,"value":%g}`, v.name, v.val)), nil
+}
