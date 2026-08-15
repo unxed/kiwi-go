@@ -38,6 +38,13 @@ type variableRemainder struct {
 // and respects optional minSizes.
 func ApportionSum(vars []*Variable, floatVals map[*Variable]float64, targetSum int, minSizes ...map[*Variable]int) DiscreteResult {
 	result := make(DiscreteResult)
+	cleanVars := make([]*Variable, 0, len(vars))
+	for _, v := range vars {
+		if v != nil {
+			cleanVars = append(cleanVars, v)
+		}
+	}
+	vars = cleanVars
 	if len(vars) == 0 {
 		return result
 	}
@@ -55,18 +62,15 @@ func ApportionSum(vars []*Variable, floatVals map[*Variable]float64, targetSum i
 		val := 0.0
 		if floatVals != nil {
 			val = floatVals[v]
-		} else if v != nil {
+		} else {
 			val = v.Value()
 		}
 
-		minVal := 0
-		if minMap != nil {
-			minVal = minMap[v]
-		}
-
 		fVal := int(math.Floor(val))
-		if fVal < minVal {
-			fVal = minVal
+		if minMap != nil {
+			if minVal, ok := minMap[v]; ok && fVal < minVal {
+				fVal = minVal
+			}
 		}
 
 		rem := val - float64(fVal)
@@ -90,7 +94,9 @@ func ApportionSum(vars []*Variable, floatVals map[*Variable]float64, targetSum i
 		for i := 0; i < len(items) && excess > 0; i++ {
 			minVal := 0
 			if minMap != nil {
-				minVal = minMap[items[i].variable]
+				if mv, ok := minMap[items[i].variable]; ok {
+					minVal = mv
+				}
 			}
 			if items[i].floorVal > minVal {
 				items[i].floorVal--
@@ -98,9 +104,7 @@ func ApportionSum(vars []*Variable, floatVals map[*Variable]float64, targetSum i
 			}
 		}
 		for _, item := range items {
-			if item.variable != nil {
-				result[item.variable] = item.floorVal
-			}
+			result[item.variable] = item.floorVal
 		}
 		return result
 	}
@@ -110,7 +114,6 @@ func ApportionSum(vars []*Variable, floatVals map[*Variable]float64, targetSum i
 		if math.Abs(items[i].remainder-items[j].remainder) > 1e-7 {
 			return items[i].remainder > items[j].remainder
 		}
-		// Tie-breaker: distance from center for symmetric layout distribution
 		mid := float64(len(vars)-1) / 2.0
 		distI := math.Abs(float64(items[i].index) - mid)
 		distJ := math.Abs(float64(items[j].index) - mid)
@@ -125,9 +128,16 @@ func ApportionSum(vars []*Variable, floatVals map[*Variable]float64, targetSum i
 		result[item.variable] = item.floorVal
 	}
 
-	// 4. Distribute remainder deficit (+1 to top deficit variables)
-	for i := 0; i < deficit && i < len(items); i++ {
-		result[items[i].variable]++
+	// 4. Distribute remainder deficit to reach targetSum exactly
+	baseAdd := deficit / len(items)
+	extraAdd := deficit % len(items)
+
+	for i, item := range items {
+		add := baseAdd
+		if i < extraAdd {
+			add++
+		}
+		result[item.variable] += add
 	}
 
 	return result
