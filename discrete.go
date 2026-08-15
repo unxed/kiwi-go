@@ -81,10 +81,26 @@ func ApportionSum(vars []*Variable, floatVals map[*Variable]float64, targetSum i
 
 	deficit := targetSum - sumFloor
 
-	// If sumFloor exceeds targetSum, return base values
+	// If sumFloor exceeds targetSum, reduce variables above minVal ordered by smallest remainder
 	if deficit < 0 {
+		excess := -deficit
+		sort.SliceStable(items, func(i, j int) bool {
+			return items[i].remainder < items[j].remainder
+		})
+		for i := 0; i < len(items) && excess > 0; i++ {
+			minVal := 0
+			if minMap != nil {
+				minVal = minMap[items[i].variable]
+			}
+			if items[i].floorVal > minVal {
+				items[i].floorVal--
+				excess--
+			}
+		}
 		for _, item := range items {
-			result[item.variable] = item.floorVal
+			if item.variable != nil {
+				result[item.variable] = item.floorVal
+			}
 		}
 		return result
 	}
