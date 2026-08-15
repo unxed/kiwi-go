@@ -101,3 +101,52 @@ func TestIndexedMapCopyWithCustomVal(t *testing.T) {
 		t.Errorf("expected 'hello_copied', got %v, ok=%v", p, ok)
 	}
 }
+func TestRemoveNonBasicConstraint(t *testing.T) {
+	solver := kiwi.NewSolver()
+	x := kiwi.NewVariable("x")
+	y := kiwi.NewVariable("y")
+
+	_ = solver.AddEditVariable(x, kiwi.StrengthStrong)
+	_ = solver.AddEditVariable(y, kiwi.StrengthStrong)
+	_ = solver.SuggestValue(x, 100)
+	_ = solver.SuggestValue(y, 200)
+
+	cn := kiwi.NewConstraint(x, kiwi.OpLe, y, kiwi.StrengthMedium)
+	err := solver.AddConstraint(cn)
+	if err != nil {
+		t.Fatalf("failed adding constraint: %v", err)
+	}
+
+	solver.UpdateVariables()
+
+	err = solver.RemoveConstraint(cn)
+	if err != nil {
+		t.Fatalf("failed removing constraint: %v", err)
+	}
+
+	if solver.HasConstraint(cn) {
+		t.Errorf("expected constraint to be removed")
+	}
+}
+
+func TestInequalityOperators(t *testing.T) {
+	solver := kiwi.NewSolver()
+	x := kiwi.NewVariable("x")
+
+	cnGe := kiwi.NewConstraint(x, kiwi.OpGe, 50, kiwi.StrengthMedium)
+	err := solver.AddConstraint(cnGe)
+	if err != nil {
+		t.Fatalf("failed adding OpGe constraint: %v", err)
+	}
+
+	cnLe := kiwi.NewConstraint(x, kiwi.OpLe, 100, kiwi.StrengthMedium)
+	err = solver.AddConstraint(cnLe)
+	if err != nil {
+		t.Fatalf("failed adding OpLe constraint: %v", err)
+	}
+
+	solver.UpdateVariables()
+	if x.Value() < 50 || x.Value() > 100 {
+		t.Errorf("expected x in [50, 100], got %f", x.Value())
+	}
+}
