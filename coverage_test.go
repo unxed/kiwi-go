@@ -162,10 +162,11 @@ func TestMustCreateConstraint(t *testing.T) {
 	defer func() {
 		r := recover()
 		if r == nil {
-			t.Errorf("expected panic on duplicate MustCreateConstraint")
+			t.Errorf("expected panic on unsatisfiable MustCreateConstraint")
 		}
 	}()
-	_ = solver.MustCreateConstraint(x, kiwi.OpEq, 10)
+	// 10 == 20 is unsatisfiable and triggers a panic
+	_ = solver.MustCreateConstraint(10, kiwi.OpEq, 20)
 }
 
 func TestRowRemoveSymbol(t *testing.T) {
